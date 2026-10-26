@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"os"
 	"strings"
 
+	"github.com/XiaoConstantine/dspy-go/cmd/dspy-cli/internal/runner"
 	"github.com/XiaoConstantine/dspy-go/pkg/benchmarks/tblite"
 	"github.com/XiaoConstantine/dspy-go/pkg/core"
 	"github.com/XiaoConstantine/dspy-go/pkg/llms"
@@ -142,7 +142,7 @@ func newTerminalTaskLLM(cfg *terminalTaskCommandConfig) (core.LLM, error) {
 
 	apiKey := strings.TrimSpace(cfg.APIKey)
 	if apiKey == "" {
-		apiKey = resolveProviderAPIKey(provider)
+		apiKey = runner.ResolveProviderAPIKey(provider)
 	}
 	if apiKey == "" {
 		return nil, fmt.Errorf("api key required for provider %q", provider)
@@ -162,35 +162,6 @@ func defaultModelForProvider(provider string) core.ModelID {
 	default:
 		return core.ModelGoogleGeminiFlash
 	}
-}
-
-func resolveProviderAPIKey(provider string) string {
-	switch provider {
-	case "anthropic":
-		return firstNonEmpty(os.Getenv("ANTHROPIC_OAUTH_TOKEN"), os.Getenv("ANTHROPIC_API_KEY"), os.Getenv("DSPY_API_KEY"))
-	case "openai":
-		return firstNonEmpty(os.Getenv("OPENAI_API_KEY"), os.Getenv("DSPY_API_KEY"))
-	case "google", "gemini":
-		return firstNonEmpty(os.Getenv("GEMINI_API_KEY"), os.Getenv("GOOGLE_API_KEY"), os.Getenv("DSPY_API_KEY"))
-	default:
-		return firstNonEmpty(
-			os.Getenv("DSPY_API_KEY"),
-			os.Getenv("GEMINI_API_KEY"),
-			os.Getenv("GOOGLE_API_KEY"),
-			os.Getenv("OPENAI_API_KEY"),
-			os.Getenv("ANTHROPIC_OAUTH_TOKEN"),
-			os.Getenv("ANTHROPIC_API_KEY"),
-		)
-	}
-}
-
-func firstNonEmpty(values ...string) string {
-	for _, value := range values {
-		if strings.TrimSpace(value) != "" {
-			return value
-		}
-	}
-	return ""
 }
 
 func (c *terminalTaskCommandConfig) ProviderOrDefault() string {

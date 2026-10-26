@@ -98,9 +98,10 @@ dspy-cli try bootstrap \
   --base-url http://localhost:1234/v1
 ```
 
-The `try` command reads `GEMINI_API_KEY`, `GOOGLE_API_KEY`, or `DSPY_API_KEY`
-when `--api-key` is omitted. For other hosted providers, pass `--api-key`
-explicitly.
+When `--api-key` is omitted, the `try` command reads the key for `--provider`:
+`GEMINI_API_KEY` or `GOOGLE_API_KEY` for `google`, `OPENAI_API_KEY` for
+`openai`. `DSPY_API_KEY` is the shared fallback and the only variable read for
+`local`.
 
 ## Analyze a Prompt
 

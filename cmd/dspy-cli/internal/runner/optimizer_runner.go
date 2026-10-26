@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/XiaoConstantine/dspy-go/cmd/dspy-cli/internal/samples"
@@ -229,20 +230,16 @@ func setupLogging(verbose bool, suppressLogs bool) {
 func setupLLM(config OptimizerConfig) error {
 	apiKey := config.APIKey
 
-	// Auto-detect API key from environment if not provided
-	if apiKey == "" {
-		apiKey = os.Getenv("GEMINI_API_KEY")
-		if apiKey == "" {
-			apiKey = os.Getenv("GOOGLE_API_KEY")
-		}
-		if apiKey == "" {
-			apiKey = os.Getenv("DSPY_API_KEY")
-		}
-	}
-
 	provider := config.Provider
 	if provider == "" {
 		provider = "google"
+	}
+	if apiKey == "" {
+		if provider == "local" {
+			apiKey = os.Getenv("DSPY_API_KEY")
+		} else {
+			apiKey = ResolveProviderAPIKey(provider)
+		}
 	}
 
 	modelID := config.Model
@@ -271,7 +268,7 @@ func setupLLM(config OptimizerConfig) error {
 	}
 
 	if apiKey == "" {
-		return fmt.Errorf("API key required. Set GEMINI_API_KEY, GOOGLE_API_KEY, or DSPY_API_KEY environment variable")
+		return fmt.Errorf("API key required for provider %q: pass --api-key or set its environment variable", provider)
 	}
 
 	return core.ConfigureDefaultLLM(apiKey, core.ModelID(modelID))
@@ -502,4 +499,35 @@ func evaluateProgramMIPRO(ctx context.Context, program core.Program, examples []
 	}
 
 	return float64(correct) / float64(len(examples))
+}
+
+// ResolveProviderAPIKey returns the API key for provider from its environment
+// variables. Unknown providers try every supported variable.
+func ResolveProviderAPIKey(provider string) string {
+	switch provider {
+	case "anthropic":
+		return firstNonEmpty(os.Getenv("ANTHROPIC_OAUTH_TOKEN"), os.Getenv("ANTHROPIC_API_KEY"), os.Getenv("DSPY_API_KEY"))
+	case "openai":
+		return firstNonEmpty(os.Getenv("OPENAI_API_KEY"), os.Getenv("DSPY_API_KEY"))
+	case "google", "gemini":
+		return firstNonEmpty(os.Getenv("GEMINI_API_KEY"), os.Getenv("GOOGLE_API_KEY"), os.Getenv("DSPY_API_KEY"))
+	default:
+		return firstNonEmpty(
+			os.Getenv("DSPY_API_KEY"),
+			os.Getenv("GEMINI_API_KEY"),
+			os.Getenv("GOOGLE_API_KEY"),
+			os.Getenv("OPENAI_API_KEY"),
+			os.Getenv("ANTHROPIC_OAUTH_TOKEN"),
+			os.Getenv("ANTHROPIC_API_KEY"),
+		)
+	}
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
 }

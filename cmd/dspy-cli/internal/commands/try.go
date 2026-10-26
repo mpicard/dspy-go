@@ -123,7 +123,7 @@ Perfect for:
 	}
 
 	cmd.Flags().StringVar(&dataset, "dataset", "qa", "Dataset to use (qa, gsm8k, hotpotqa)")
-	cmd.Flags().StringVar(&apiKey, "api-key", "", "API key (or set GEMINI_API_KEY env var)")
+	cmd.Flags().StringVar(&apiKey, "api-key", "", "API key (default: the provider environment variable, e.g. GEMINI_API_KEY or OPENAI_API_KEY)")
 	cmd.Flags().StringVar(&provider, "provider", "google", "LLM provider (google, openai, local)")
 	cmd.Flags().StringVar(&model, "model", string(core.ModelGoogleGeminiFlash), "Model ID to use")
 	cmd.Flags().StringVar(&baseURL, "base-url", "", "Base URL for the LLM provider (optional)")

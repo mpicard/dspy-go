@@ -68,14 +68,13 @@ The default provider/model is Google `gemini-2.5-flash`. Useful flags are:
 - `--api-key`: explicit API key
 - `--verbose`: detailed logs
 
-The command reads `GEMINI_API_KEY`, `GOOGLE_API_KEY`, or `DSPY_API_KEY` when
-`--api-key` is empty. Pass the key explicitly for another hosted provider:
+When `--api-key` is empty, the command reads the key for `--provider`:
+`GEMINI_API_KEY` or `GOOGLE_API_KEY` for `google`, `OPENAI_API_KEY` for
+`openai`. `DSPY_API_KEY` is the shared fallback and the only variable read for
+`local`.
 
 ```bash
-./dspy-cli try simba \
-  --provider openai \
-  --model gpt-4o-mini \
-  --api-key "$OPENAI_API_KEY"
+./dspy-cli try simba --provider openai --model gpt-4o-mini
 ```
 
 Use a local OpenAI-compatible server with:
