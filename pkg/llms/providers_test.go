@@ -72,3 +72,19 @@ func codexTestToken(accountID string) string {
 	payload := `{"https://api.openai.com/auth":{"chatgpt_account_id":"` + accountID + `"}}`
 	return "e30." + base64.RawURLEncoding.EncodeToString([]byte(payload)) + ".signature"
 }
+
+func TestOpenAICompatibleBaseURLWithOrWithoutV1(t *testing.T) {
+	var paths []string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, request *http.Request) {
+		paths = append(paths, request.URL.Path)
+		http.Error(w, "stop after capturing path", http.StatusBadRequest)
+	}))
+	defer server.Close()
+
+	for _, baseURL := range []string{server.URL, server.URL + "/v1", server.URL + "/v1/"} {
+		model, err := NewOpenAICompatible("local", "local-model", baseURL, WithAPIKey("test-key"))
+		require.NoError(t, err)
+		_, _ = model.Generate(context.Background(), "hello")
+	}
+	assert.Equal(t, []string{"/v1/chat/completions", "/v1/chat/completions", "/v1/chat/completions"}, paths)
+}

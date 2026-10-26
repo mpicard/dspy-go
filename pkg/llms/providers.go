@@ -717,7 +717,11 @@ func chatCompletionsBaseURL(baseURL, path string) (string, error) {
 	if !strings.HasSuffix(path, suffix) {
 		return "", dspyerrors.New(dspyerrors.InvalidInput, "llm-go requires a Chat Completions endpoint path")
 	}
-	return baseURL + strings.TrimSuffix(path, suffix), nil
+	prefix := strings.TrimSuffix(path, suffix)
+	if strings.HasSuffix(baseURL, prefix) {
+		return baseURL, nil
+	}
+	return baseURL + prefix, nil
 }
 
 func configuredBaseURL(config core.ProviderConfig) string {
