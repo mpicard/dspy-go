@@ -52,27 +52,27 @@ Perfect for:
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			return optimizers.ListAll(), cobra.ShellCompDirectiveNoFileComp
 		},
-		Run: func(cmd *cobra.Command, args []string) {
+		SilenceUsage:  true,
+		SilenceErrors: true,
+		RunE: func(cmd *cobra.Command, args []string) error {
 			optimizerName := strings.ToLower(args[0])
 
 			// Validate optimizer
 			if _, err := optimizers.GetOptimizer(optimizerName); err != nil {
-				fmt.Printf("%sError:%s Unknown optimizer '%s'\n\n", display.ColorRed, display.ColorReset, optimizerName)
 				fmt.Println("Available optimizers:")
 				for _, name := range optimizers.ListAll() {
 					fmt.Printf("  - %s\n", name)
 				}
-				return
+				return fmt.Errorf("unknown optimizer %q", optimizerName)
 			}
 
 			// Validate dataset
 			if _, exists := samples.GetSampleDataset(dataset); !exists {
-				fmt.Printf("%sError:%s Unknown dataset '%s'\n\n", display.ColorRed, display.ColorReset, dataset)
 				fmt.Println("Available datasets:")
 				for _, ds := range samples.ListAvailableDatasets() {
 					fmt.Printf("  - %s\n", ds)
 				}
-				return
+				return fmt.Errorf("unknown dataset %q", dataset)
 			}
 
 			// Show what we're about to do
@@ -110,15 +110,15 @@ Perfect for:
 
 			if err != nil {
 				fmt.Printf("\n%s❌ Optimization Failed%s\n", display.ColorRed, display.ColorReset)
-				fmt.Printf("%sError:%s %s\n", display.ColorRed, display.ColorReset, err.Error())
 				if result != nil && result.ErrorMessage != "" {
 					fmt.Printf("%sDetails:%s %s\n", display.ColorRed, display.ColorReset, result.ErrorMessage)
 				}
-				return
+				return err
 			}
 
 			// Display results
 			displayResults(result)
+			return nil
 		},
 	}
 
